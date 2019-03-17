@@ -1,0 +1,16 @@
+{
+  "name": "image-to-text",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "fs-extra": "^7.0.1",
+    "lodash": "^4.17.11",
+    "node-tesseract": "^0.2.7"
+  }
+}
