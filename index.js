@@ -1,17 +1,17 @@
 var tesseract = require('node-tesseract');
 const fs = require('fs-extra')
 const _ = require('lodash')
-
+const moment=require('moment')
 // Recognize text of any language in any format
 const path = require('path')
 var Jimp = require('jimp');
 
 // open a file called "lenna.png"
 let convertGreyscale = (url) => {
+    console.log(url)
     return new Promise((resolve, reject) => {
         let pathName = path.basename(url)
         let newPath = process.env.PWD + '/temp/' + pathName
-        console.log(pathName)
         Jimp.read(url, (err, lenna) => {
             if (err) { return reject(err) };
             lenna.greyscale().write(newPath);
@@ -24,7 +24,6 @@ let convertGreyscale = (url) => {
 
 
 let read = async (url, lang = 'vie') => {
-    console.log('url', url)
     return new Promise((resolve, reject) => {
         tesseract.process(url, { l: lang, psm: 6 }, function (err, text) {
             if (err) {
@@ -79,25 +78,24 @@ let run = () => {
                                     }
                                     else {
                                         datanotmath.push(tx)
-                                        console.log('not match', tx)
                                     }
                                 }
                                 if (tx.match("Defeated") || tx.match("Niv. vaincu") || tx.match("danh bai") || tx.match("anh bai") || tx.match(" bai")) {
-                                    let level = tx.match(/ép \d{1}|Cap \d{1}|Niv. vaincu \d{1}|Lv \d{1}|.ap \d{1}|ip\d{1}/gm)
+                                    let level = tx.match(/ép \d{1}|Cap \d{1}|Niv. vaincu \d{1}|Lv \d{1}|.ap \d{1}|ip\d{1}|CAp \d{1}|C4p \d{1}|Cp \d{1}/gm)
                                     if (level && level[0]) {
                                         let number = level[0].match(/\d{1}/gi)
                                         let filename = file.split(/\//gi)
                                         let time = datafull[datafull.length - 1].split(' ');
-                                        let finalTime = time[0]
+
+                                        let finalTime = 'null,null'
                                         if (time.length > 1) {
                                             finalTime = time[0] + ',' + time[1]
                                         }
-                                        datafull.push(item + "," + finalTime + ',Q' + number[0] + ',' + filename[filename.length - 1])
+                                        datafull.push(item + "," + finalTime + ',Q' + number[0])
                                     }
                                     else {
                                         datanotmath.push(file)
                                         datanotmath.push(tx)
-                                        console.log('not match level ', tx)
                                         datanotmath.push('end')
                                     }
                                 }
@@ -109,13 +107,21 @@ let run = () => {
             }
         }
         let datafullF1 = []
-        _.map(datafull, (item) => {
+        _.map(datafull, (item,i) => {
             let data = item.match(/Q\d{1}/gm)
             if (data) {
+                let checktime = item.split(',')
+                if(checktime[1] === 'null'){
+                    let itemNear = datafullF1[datafullF1.length - 1].split(',')
+                    let time = moment(itemNear[1]+' '+itemNear[2],'MM/DD/YY HH:mm:ss').add(42,'seconds').format('MM/DD/YY,HH:mm:ss')
+                    item = checktime[0]+','+time+','+checktime[3]
+                }
                 datafullF1.push(item)
             }
         })
-        fs.writeJSONSync(__dirname + '/export/output_final.json', datafullF1)
+
+
+        fs.writeJSONSync(__dirname + '/export/output_final.json', _.union(datafullF1))
         fs.writeJSONSync(__dirname + '/export/output.json', datafull)
         fs.writeJSONSync(__dirname + '/export/output_notmatch.json', datanotmath)
         fs.writeJSONSync(__dirname + '/export/fulltext.json', fulltext)
